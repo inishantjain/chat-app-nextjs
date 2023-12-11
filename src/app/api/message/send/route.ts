@@ -54,7 +54,6 @@ export async function POST(req: Request) {
       score: timestamp,
       member: JSON.stringify(message),
     });
-    console.log("sender", sender);
 
     return new Response("OK");
   } catch (error) {

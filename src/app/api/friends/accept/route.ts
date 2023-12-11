@@ -22,16 +22,25 @@ export async function POST(req: Request) {
     const hasFriendRequest = await fetchRedis("sismember", `user:${session.user.id}:incoming_friend_requests`, idToAdd);
     if (!hasFriendRequest) return new Response("No Friend Request", { status: 400 });
 
+    const [userRaw, friendRaw] = (await Promise.all([
+      fetchRedis("get", `user:${session.user.id}`),
+      fetchRedis("get", `user:${idToAdd}`),
+    ])) as string[];
+
+    const user = JSON.parse(userRaw) as User;
+    const friend = JSON.parse(friendRaw) as User;
+
     //notify added user
-    pusherServer.trigger(toPusherKey(`user:${idToAdd}:friends`), "new_friend", "");
 
-    //as post req not cached it's safe to use the db instance
-    await db.sadd(`user:${session.user.id}:friends`, idToAdd);
-    await db.sadd(`user:${idToAdd}:friends`, session.user.id);
-
-    // await db.srem(`user:${idToAdd}:outbound_friend_requests`, session.user.id); //TODO:functionality where we track our sent requests isn't yet implemented where we can use it
-
-    await db.srem(`user:${session.user.id}:incoming_friend_requests`, idToAdd);
+    //TODO:functionality where we track our sent requests isn't yet implemented where we can use it
+    // await db.srem(`user:${idToAdd}:outbound_friend_requests`, session.user.id);
+    await Promise.all([
+      pusherServer.trigger(toPusherKey(`user:${idToAdd}:friends`), "new_friend", user),
+      pusherServer.trigger(toPusherKey(`user:${session.user.id}:friends`), "new_friend", friend),
+      await db.sadd(`user:${session.user.id}:friends`, idToAdd),
+      await db.sadd(`user:${idToAdd}:friends`, session.user.id),
+      await db.srem(`user:${session.user.id}:incoming_friend_requests`, idToAdd),
+    ]);
 
     return new Response("OK");
   } catch (error) {
