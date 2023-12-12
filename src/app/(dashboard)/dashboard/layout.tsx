@@ -12,6 +12,7 @@ import { getFriendsByUserId } from "@/helpers/get-friends-by-user-id";
 import SidebarChatList from "@/components/SidebarChatList";
 import MobileChatLayout from "@/components/MobileChatLayout";
 import { SideBarOption } from "@/types/typings";
+import { Metadata } from "next";
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,6 +26,11 @@ const sideBarOptions: SideBarOption[] = [
     Icon: "UserPlus",
   },
 ];
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "A next js chat application",
+};
 
 async function Layout({ children }: LayoutProps) {
   const session = await getServerSession(authOptions);
@@ -113,7 +119,7 @@ async function Layout({ children }: LayoutProps) {
           </ul>
         </nav>
       </div>
-      <aside className="max-h-screen container py-16 md:py-12">{children}</aside>
+      <aside className="max-h-screen container pt-11 md:pt-4 pb-4">{children}</aside>
     </div>
   );
 }

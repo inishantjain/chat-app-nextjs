@@ -49,9 +49,7 @@ const ChatInput: FC<ChatInputProps> = ({ chatPartner, chatId }) => {
         />
 
         <div onClick={() => textareaRef.current?.focus()} className="py-2" aria-hidden="true">
-          <div className="py-px">
-            <div className="h-9" />
-          </div>
+          <div className="h-4" />
         </div>
 
         <div className="absolute right-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
