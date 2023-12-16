@@ -1,4 +1,5 @@
-import { LucideProps, UserPlus } from "lucide-react";
+import { LucideProps, UserPlus, Users } from "lucide-react";
+import Image, { ImageProps } from "next/image";
 
 export const Icons = {
   Logo: (props: LucideProps) => (
@@ -9,7 +10,9 @@ export const Icons = {
       />
     </svg>
   ),
+  LogoMonkey: () => <Image height={24} width={24} alt="logo" src={"/logo.png"} />,
   UserPlus,
+  Users,
 };
 
 export type Icon = keyof typeof Icons;

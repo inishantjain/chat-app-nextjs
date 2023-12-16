@@ -3,8 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/options";
 import { fetchRedis } from "@/helpers/redis";
 import { db } from "@/lib/db";
-import { pusherServer } from "@/lib/pusher";
-import { toPusherKey } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
@@ -22,21 +20,21 @@ export async function POST(req: Request) {
     const hasFriendRequest = await fetchRedis("sismember", `user:${session.user.id}:incoming_friend_requests`, idToAdd);
     if (!hasFriendRequest) return new Response("No Friend Request", { status: 400 });
 
-    const [userRaw, friendRaw] = (await Promise.all([
+    /*     const [userRaw, friendRaw] = (await Promise.all([
       fetchRedis("get", `user:${session.user.id}`),
       fetchRedis("get", `user:${idToAdd}`),
     ])) as string[];
 
     const user = JSON.parse(userRaw) as User;
-    const friend = JSON.parse(friendRaw) as User;
+    const friend = JSON.parse(friendRaw) as User; */
 
     //notify added user
 
     //TODO:functionality where we track our sent requests isn't yet implemented where we can use it
     // await db.srem(`user:${idToAdd}:outbound_friend_requests`, session.user.id);
     await Promise.all([
-      pusherServer.trigger(toPusherKey(`user:${idToAdd}:friends`), "new_friend", user),
-      pusherServer.trigger(toPusherKey(`user:${session.user.id}:friends`), "new_friend", friend),
+      //TODO: notify friend that he has been added
+      // pusherServer.trigger(toPusherKey(`user:${session.user.id}:friends`), "new_friend", friend),
       db.sadd(`user:${session.user.id}:friends`, idToAdd),
       db.sadd(`user:${idToAdd}:friends`, session.user.id),
       db.srem(`user:${session.user.id}:incoming_friend_requests`, idToAdd),

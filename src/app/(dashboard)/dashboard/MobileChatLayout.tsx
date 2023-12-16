@@ -5,9 +5,9 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FC, Fragment, useEffect, useState } from "react";
-import { Icons } from "./Icons";
+import { Icons } from "@/components/Icons";
 import SignOutButton from "./SignOutButton";
-import Button, { buttonVariants } from "./ui/Button";
+import Button, { buttonVariants } from "@/components/ui/Button";
 import FriendRequestSidebarOptions from "./FriendRequestSidebarOption";
 import SidebarChatList from "./SidebarChatList";
 import { Session } from "next-auth";
@@ -15,13 +15,18 @@ import { usePathname } from "next/navigation";
 import { SideBarOption } from "@/types/typings";
 
 interface MobileChatLayoutProps {
-  friends: User[];
+  chatPartnerList: User[];
   session: Session;
   sidebarOptions: SideBarOption[];
   unseenRequestCount: number;
 }
 
-const MobileChatLayout: FC<MobileChatLayoutProps> = ({ friends, session, sidebarOptions, unseenRequestCount }) => {
+const MobileChatLayout: FC<MobileChatLayoutProps> = ({
+  chatPartnerList,
+  session,
+  sidebarOptions,
+  unseenRequestCount,
+}) => {
   const [open, setOpen] = useState<boolean>(false);
 
   const pathname = usePathname();
@@ -34,7 +39,7 @@ const MobileChatLayout: FC<MobileChatLayoutProps> = ({ friends, session, sidebar
     <div className="fixed bg-zinc-50 border-b border-zinc-200 top-0 inset-x-0 py-2 px-4">
       <div className="w-full flex justify-between items-center">
         <Link href="/dashboard" className={buttonVariants({ variant: "ghost" })}>
-          <Icons.Logo className="h-6 w-auto text-indigo-600" />
+          <Icons.LogoMonkey />
         </Link>
         <Button onClick={() => setOpen(true)} className="gap-4">
           Menu <Menu className="h-6 w-6" />
@@ -78,14 +83,14 @@ const MobileChatLayout: FC<MobileChatLayoutProps> = ({ friends, session, sidebar
                       <div className="relative mt-6 flex-1 px-4 sm:px-6">
                         {/* Content */}
 
-                        {friends.length > 0 ? (
+                        {chatPartnerList.length > 0 ? (
                           <div className="text-xs font-semibold leading-6 text-gray-400">Your chats</div>
                         ) : null}
 
                         <nav className="flex flex-1 flex-col">
                           <ul role="list" className="flex flex-1 flex-col gap-y-7">
                             <li>
-                              <SidebarChatList friends={friends} sessionId={session.user.id} />
+                              <SidebarChatList chatPartners={chatPartnerList} sessionId={session.user.id} />
                             </li>
 
                             <li>

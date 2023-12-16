@@ -1,13 +1,13 @@
 "use client";
 import { FC, useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { chatHrefConstructor, toPusherKey } from "@/lib/utils";
 import { pusherClient } from "@/lib/pusher";
 import toast from "react-hot-toast";
-import UnseenChatToast from "./UnseenChatToast";
+import UnseenChatToast from "@/components/UnseenChatToast";
 
 interface SidebarChatListProps {
-  friends: User[];
+  chatPartners: User[];
   sessionId: string;
 }
 
@@ -16,20 +16,22 @@ interface ExtendedMessage extends Message {
   senderName: string;
 }
 
-const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
-  const router = useRouter();
+const SidebarChatList: FC<SidebarChatListProps> = ({ chatPartners, sessionId }) => {
   const pathname = usePathname();
   const [unseenMessages, setUnseenMessages] = useState<Message[]>([]);
-  const [activeChats, setActiveChats] = useState<User[]>(friends);
+  const [activeChats, setActiveChats] = useState<User[]>(chatPartners);
 
   useEffect(() => {
     pusherClient.subscribe(toPusherKey(`user:${sessionId}:chats`));
-    pusherClient.subscribe(toPusherKey(`user:${sessionId}:friends`));
 
-    const newFriendHandler = (newFriend: User) => {
-      setActiveChats((prev) => [...prev, newFriend]);
-    };
     const chatHandler = (message: ExtendedMessage) => {
+      //if its a new chat add it to the chat list
+      if (!activeChats.some((chatUser) => chatUser.id === message.senderId))
+        setActiveChats((prev) => [
+          { id: message.senderId, image: message.senderImg, name: message.senderName, email: "" },
+          ...prev,
+        ]);
+      //if user is away from active chat then push a toast
       const shouldNotify = pathname !== `/dashboard/chat/${chatHrefConstructor(sessionId, message.senderId)}`;
 
       if (!shouldNotify) return;
@@ -49,16 +51,12 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
     };
 
     pusherClient.bind("new_message", chatHandler);
-    pusherClient.bind("new_friend", newFriendHandler);
 
     return () => {
       pusherClient.unbind("new_message", chatHandler);
-      pusherClient.unbind("new_friend", newFriendHandler);
-
       pusherClient.unsubscribe(toPusherKey(`users:${sessionId}:chats`));
-      pusherClient.unsubscribe(toPusherKey(`users:${sessionId}:friends`));
     };
-  }, [pathname, sessionId, router]);
+  }, [pathname, sessionId, activeChats]);
 
   useEffect(() => {
     //if a chat is already open then it can't have unseen messages

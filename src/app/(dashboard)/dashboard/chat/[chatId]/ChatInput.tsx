@@ -1,7 +1,7 @@
 "use client";
 import { FC, useRef, useState } from "react";
 import TextareaAutoSize from "react-textarea-autosize";
-import Button from "./ui/Button";
+import Button from "@/components/ui/Button";
 import axios from "axios";
 import toast from "react-hot-toast";
 

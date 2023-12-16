@@ -5,8 +5,8 @@ import { messageArrayValidator } from "@/lib/validations/message";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import Messages from "@/components/Messages";
-import ChatInput from "@/components/ChatInput";
+import Messages from "@/app/(dashboard)/dashboard/chat/[chatId]/Messages";
+import ChatInput from "@/app/(dashboard)/dashboard/chat/[chatId]/ChatInput";
 
 interface PageProps {
   params: {
@@ -41,6 +41,7 @@ async function Chat({ params }: PageProps) {
   }
 
   const chatPartnerId = user.id === userId1 ? userId2 : userId1;
+  const isPartnerFriend = (await db.sismember(`user:${userId1}:friends`, userId2)) === 1 ? true : false;
   const chatPartner = (await db.get(`user:${chatPartnerId}`)) as User;
   const initialMessages = await getChatMessages(chatId);
 
@@ -77,7 +78,11 @@ async function Chat({ params }: PageProps) {
         sessionImg={session.user.image}
         chatId={chatId}
       />
-      <ChatInput chatPartner={chatPartner} chatId={chatId} />
+      {isPartnerFriend ? (
+        <ChatInput chatPartner={chatPartner} chatId={chatId} />
+      ) : (
+        <p className="text-center p-6 text-sm text-zinc-500">You are not friend with {chatPartner.name}</p>
+      )}
     </div>
   );
 }

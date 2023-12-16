@@ -1,5 +1,5 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import FriendRequests from "@/components/FriendRequests";
+import FriendRequests from "@/app/(dashboard)/dashboard/requests/FriendRequests";
 import { fetchRedis } from "@/helpers/redis";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
@@ -24,9 +24,9 @@ async function Requests() {
 
   return (
     <main className="pt-8">
-      <h1 className="font-bold text-5xl mb-8"></h1>
+      <h1 className="font-bold text-4xl md:text-5xl mb-8">Friend Requests</h1>
       <div className="flex flex-col gap-4">
-        <FriendRequests incomingFriendRequests={incomingFriendRequests} sessionId={session.user.id} />
+        <FriendRequests incomingFriendRequests={incomingFriendRequests} />
       </div>
     </main>
   );

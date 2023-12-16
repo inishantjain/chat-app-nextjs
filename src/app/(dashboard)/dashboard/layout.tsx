@@ -3,16 +3,16 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import Link from "next/link";
-import { Icon, Icons } from "@/components/Icons";
+import { Icons } from "@/components/Icons";
 import Image from "next/image";
-import SignOutButton from "@/components/SignOutButton";
-import FriendRequestSidebarOptions from "@/components/FriendRequestSidebarOption";
+import SignOutButton from "@/app/(dashboard)/dashboard/SignOutButton";
+import FriendRequestSidebarOptions from "@/app/(dashboard)/dashboard/FriendRequestSidebarOption";
 import { fetchRedis } from "@/helpers/redis";
-import { getFriendsByUserId } from "@/helpers/get-friends-by-user-id";
-import SidebarChatList from "@/components/SidebarChatList";
-import MobileChatLayout from "@/components/MobileChatLayout";
+import SidebarChatList from "@/app/(dashboard)/dashboard/SidebarChatList";
+import MobileChatLayout from "@/app/(dashboard)/dashboard/MobileChatLayout";
 import { SideBarOption } from "@/types/typings";
 import { Metadata } from "next";
+import { db } from "@/lib/db";
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,7 +25,32 @@ const sideBarOptions: SideBarOption[] = [
     href: "/dashboard/add",
     Icon: "UserPlus",
   },
+  {
+    id: 2,
+    name: "My Friends",
+    href: "/dashboard/myfriends",
+    Icon: "Users",
+  },
+  {
+    id: 3,
+    name: "Add Friend",
+    href: "/dashboard/add",
+    Icon: "UserPlus",
+  },
 ];
+
+async function getChatsByUserId(userId: string) {
+  const chatIds = await db.keys(`chat:*${userId}*:messages`);
+  const chats = (await Promise.all(
+    chatIds.map(async (chatId) => {
+      // chat:userId1--userId2:messages -> retrieving the chatPartnerId
+      const [userId1, userId2] = chatId.slice(5, -9).split("--");
+      const chatPartnerId = userId1 === userId ? userId2 : userId1;
+      return await db.get(`user:${chatPartnerId}`);
+    })
+  )) as User[] | [];
+  return chats;
+}
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -36,7 +61,7 @@ async function Layout({ children }: LayoutProps) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const friends = await getFriendsByUserId(session.user.id);
+  const chatPartnerList = await getChatsByUserId(session.user.id);
 
   const unseenRequestCount = (
     (await fetchRedis("smembers", `user:${session.user.id}:incoming_friend_requests`)) as User[]
@@ -46,22 +71,22 @@ async function Layout({ children }: LayoutProps) {
     <div className="w-full flex h-screen">
       <div className="md:hidden">
         <MobileChatLayout
-          friends={friends}
+          chatPartnerList={chatPartnerList}
           session={session}
           sidebarOptions={sideBarOptions}
           unseenRequestCount={unseenRequestCount}
         />
       </div>
       <div className="hidden md:flex h-full w-full max-w-xs grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
-        <Link href="/dashboard" className="flex h-16 shrink-0 items-center">
-          <Icons.Logo className="h-8 w-auto text-indigo-600" />
+        <Link href="/dashboard" className="mt-4 flex items-center w-fit">
+          <Icons.LogoMonkey />
         </Link>
 
-        {friends.length > 0 && <div className="text-xs font-semibold leading-6 text-gray-400">Your chats</div>}
+        {chatPartnerList.length > 0 && <div className="text-xs font-semibold leading-6 text-gray-400">Your chats</div>}
 
         <nav className="flex flex-1 flex-col">
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
-            <SidebarChatList friends={friends} sessionId={session.user.id} />
+            <SidebarChatList chatPartners={chatPartnerList} sessionId={session.user.id} />
 
             <li>
               <div className="text-xs font-semibold leading-6 text-gray-400">Overview</div>
